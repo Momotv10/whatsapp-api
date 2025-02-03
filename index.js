@@ -26,6 +26,11 @@ let qrCodeImageUrl = null;
 // 🔹 استعادة الجلسة من Google Drive عند بدء التشغيل
 async function downloadSession() {
     try {
+        if (fs.existsSync(SESSION_FILE_PATH)) {
+            console.log('✅ الجلسة موجودة محليًا.');
+            return;
+        }
+
         const response = await drive.files.list({
             q: `'${FOLDER_ID}' in parents and name='session.json'`,
             fields: 'files(id, name)',
@@ -36,7 +41,7 @@ async function downloadSession() {
             const dest = fs.createWriteStream(SESSION_FILE_PATH);
             await drive.files.get({ fileId, alt: 'media' }, { responseType: 'stream' })
                 .then(res => res.data.pipe(dest));
-            console.log('✅ جلسة WhatsApp تم استعادتها من Google Drive.');
+            console.log('✅ تم استعادة الجلسة من Google Drive.');
         } else {
             console.log('⚠️ لا يوجد ملف جلسة محفوظ، سيتم إنشاء جلسة جديدة.');
         }
