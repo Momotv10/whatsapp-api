@@ -12,7 +12,7 @@ const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
 const FOLDER_ID = '1EREBW5S6FB4qizTyBW18Vcgxkeg80TbJ'; // Folder ID الخاص بك
 
 const auth = new google.auth.GoogleAuth({
-    keyFile: 'idyllic-lotus-449820-h0-3b816a5af469.json', // ملف JSON الخاص بك
+    keyFile: 'momo.json', // ملف JSON الخاص بك
     scopes: SCOPES,
 });
 
