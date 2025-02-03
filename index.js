@@ -1,50 +1,51 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode');
+const qrcode = require('qrcode-terminal');
 const express = require('express');
-const cors = require('cors');
 
 const app = express();
 app.use(express.json());
-app.use(cors());
 
-// إعداد واتساب
+// إعداد عميل WhatsApp
 const client = new Client({
-    authStrategy: new LocalAuth()
+    authStrategy: new LocalAuth(),
+    puppeteer: {
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    }
 });
 
-client.on('qr', async (qr) => {
-    console.log("📌 امسح رمز الـ QR لتسجيل الدخول إلى واتساب:");
-
-    // توليد رابط QR كصورة
-    const qrImage = await qrcode.toDataURL(qr);
-    console.log("🔗 رابط QR Code (افتحه في المتصفح لمسحه):");
-    console.log(qrImage);
+// توليد QR Code عند الحاجة لتسجيل الدخول
+client.on('qr', (qr) => {
+    console.log("✅ QR Code generated. Scan the QR code below to login:");
+    qrcode.generate(qr, { small: false }); // جعل QR Code أكبر وأوضح
 });
 
+// التأكد من أن العميل جاهز
 client.on('ready', () => {
-    console.log('✅ WhatsApp Client جاهز للعمل!');
+    console.log('✅ WhatsApp Client is ready!');
 });
 
-// API لإرسال رسالة عبر واتساب
+// API لإرسال رسالة
 app.post('/send', async (req, res) => {
     const { phone, message } = req.body;
 
     if (!phone || !message) {
-        return res.status(400).json({ success: false, error: "⚠️ رقم الهاتف والرسالة مطلوبان!" });
+        return res.status(400).json({ success: false, error: "رقم الهاتف والرسالة مطلوبان!" });
     }
 
     try {
         await client.sendMessage(`${phone}@c.us`, message);
-        res.json({ success: true, message: "✅ تم إرسال الرسالة بنجاح!" });
+        res.json({ success: true, message: "✅ تم إرسال الرسالة!" });
     } catch (error) {
-        res.status(500).json({ success: false, error: "❌ فشل في إرسال الرسالة", details: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
 // تشغيل السيرفر
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 السيرفر يعمل على البورت ${PORT}`);
+    console.log(`🚀 Server is running on port ${PORT}`);
 });
 
+// تهيئة العميل
 client.initialize();
