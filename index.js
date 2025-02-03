@@ -1,80 +1,128 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
 const express = require('express');
-const path = require('path');
-const fs = require('fs');
+const fs = require('fs-extra');
+const { google } = require('googleapis');
 
 const app = express();
 app.use(express.json());
 
-// مسار حفظ الجلسة
-const sessionPath = path.join(__dirname, '.wwebjs_auth');
+// إعداد Google Drive API
+const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
+const FOLDER_ID = '1EREBW5S6FB4qizTyBW18Vcgxkeg80TbJ'; // استبدل بـ Folder ID الخاص بك
 
-// تحقق مما إذا كانت الجلسة محفوظة
-const isSessionSaved = fs.existsSync(sessionPath);
-
-// إعداد عميل WhatsApp
-const client = new Client({
-    authStrategy: new LocalAuth({
-        dataPath: sessionPath // تحديد مسار حفظ الجلسة
-    }),
-    puppeteer: {
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    }
+const auth = new google.auth.GoogleAuth({
+    keyFile: 'google_drive_credentials.json', // ضع ملف JSON هنا
+    scopes: SCOPES,
 });
 
-// متغير لتخزين QR Code كصورة
-let qrCodeImageUrl = null;
+const drive = google.drive({ version: 'v3', auth });
 
-// توليد QR Code كصورة (فقط إذا لم تكن الجلسة محفوظة)
-client.on('qr', async (qr) => {
-    if (!isSessionSaved) {
-        console.log("✅ QR Code generated. Generating image...");
+const SESSION_FILE_PATH = './session.json';
 
-        // إنشاء QR Code كصورة
-        const qrCodeImage = await qrcode.toDataURL(qr);
-        qrCodeImageUrl = qrCodeImage;
-
-        console.log("✅ QR Code image generated. Use the following URL to scan:");
-        console.log(qrCodeImageUrl); // هذا هو رابط الصورة
-    }
-});
-
-// التأكد من أن العميل جاهز
-client.on('ready', () => {
-    console.log('✅ WhatsApp Client is ready!');
-});
-
-// API لإرسال رسالة
-app.post('/send', async (req, res) => {
-    const { phone, message } = req.body;
-
-    if (!phone || !message) {
-        return res.status(400).json({ success: false, error: "رقم الهاتف والرسالة مطلوبان!" });
-    }
-
+// 🔹 استعادة الجلسة من Google Drive عند بدء التشغيل
+async function downloadSession() {
     try {
-        await client.sendMessage(`${phone}@c.us`, message);
-        res.json({ success: true, message: "✅ تم إرسال الرسالة!" });
+        const response = await drive.files.list({
+            q: `'${FOLDER_ID}' in parents and name='session.json'`,
+            fields: 'files(id, name)',
+        });
+
+        if (response.data.files.length > 0) {
+            const fileId = response.data.files[0].id;
+            const dest = fs.createWriteStream(SESSION_FILE_PATH);
+            await drive.files.get({ fileId, alt: 'media' }, { responseType: 'stream' })
+                .then(res => res.data.pipe(dest));
+            console.log('✅ جلسة WhatsApp تم استعادتها من Google Drive.');
+        } else {
+            console.log('⚠️ لا يوجد ملف جلسة محفوظ.');
+        }
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        console.error('❌ فشل استعادة الجلسة:', error.message);
     }
-});
+}
 
-// API للحصول على QR Code كصورة
-app.get('/qrcode', (req, res) => {
-    if (!qrCodeImageUrl) {
-        return res.status(404).json({ success: false, error: "QR Code not generated yet." });
+// 🔹 حفظ الجلسة إلى Google Drive
+async function uploadSession() {
+    try {
+        const response = await drive.files.list({
+            q: `'${FOLDER_ID}' in parents and name='session.json'`,
+            fields: 'files(id, name)',
+        });
+
+        if (response.data.files.length > 0) {
+            const fileId = response.data.files[0].id;
+            await drive.files.update({
+                fileId,
+                media: { body: fs.createReadStream(SESSION_FILE_PATH) },
+            });
+            console.log('✅ تم تحديث الجلسة في Google Drive.');
+        } else {
+            await drive.files.create({
+                media: { body: fs.createReadStream(SESSION_FILE_PATH) },
+                resource: { name: 'session.json', parents: [FOLDER_ID] },
+            });
+            console.log('✅ تم حفظ الجلسة الجديدة في Google Drive.');
+        }
+    } catch (error) {
+        console.error('❌ فشل حفظ الجلسة:', error.message);
     }
-    res.send(`<img src="${qrCodeImageUrl}" alt="QR Code" />`);
-});
+}
 
-// تشغيل السيرفر
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
-});
+// 🔹 تحميل الجلسة عند بدء التشغيل
+downloadSession().then(() => {
+    const client = new Client({
+        authStrategy: new LocalAuth({
+            dataPath: 'sessions'
+        }),
+        puppeteer: {
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        }
+    });
 
-// تهيئة العميل
-client.initialize();
+    let qrCodeImageUrl = null;
+
+    client.on('qr', async (qr) => {
+        console.log("✅ QR Code Generated");
+        qrCodeImageUrl = await qrcode.toDataURL(qr);
+    });
+
+    client.on('ready', () => {
+        console.log('✅ WhatsApp Client is Ready!');
+    });
+
+    // حفظ الجلسة تلقائيًا عند أي تغيير
+    client.on('authenticated', uploadSession);
+
+    // API للحصول على QR Code
+    app.get('/qrcode', (req, res) => {
+        if (!qrCodeImageUrl) {
+            return res.status(404).json({ success: false, error: "QR Code غير متاح حاليًا" });
+        }
+        res.send(`<img src="${qrCodeImageUrl}" alt="QR Code" />`);
+    });
+
+    // API لإرسال رسالة
+    app.post('/send', async (req, res) => {
+        const { phone, message } = req.body;
+        if (!phone || !message) {
+            return res.status(400).json({ success: false, error: "رقم الهاتف والرسالة مطلوبان!" });
+        }
+        try {
+            await client.sendMessage(`${phone}@c.us`, message);
+            res.json({ success: true, message: "✅ تم إرسال الرسالة!" });
+        } catch (error) {
+            res.status(500).json({ success: false, error: error.message });
+        }
+    });
+
+    // تشغيل السيرفر
+    const PORT = process.env.PORT || 8080;
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`🚀 Server is running on port ${PORT}`);
+    });
+
+    // تشغيل العميل
+    client.initialize();
+});
