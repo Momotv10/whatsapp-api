@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "idyllic-lotus-449820-h0",
+  "private_key_id": "ed879aae4c71031c857437a8b58f8f7af8a1bb39",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCaEA/61gmiWI+O\ny4NZZPJilrs0l4RQj+DIAwzUGLFVdaPWquSZPEvGsfG2mE4Ta5plEcqF/XpmwN82\nULWQsOBjeBZfNWQuldZJEa8ERpgmiONHsJK5LkvH+6EfZBX8J5ZxdAlzxXo6V4A0\nMe/zMWT1fTaanzSsYdaJ9OANczh7YIFX2cUMtvj+XQWcTxfw22gW6GnNBPhz9/4g\n4+3Kz7qMki2EAgL67DqOX6ogHcEoLufRoJzsrfVUOIB6QCsEpCIjcc2WcM36c/LR\napLwAc3oVBggHr4NnRH0Sn84TlU+k2zotNQv186xU2OBBrmy+rScURq8cVxLcpdv\nG3McY9GrAgMBAAECggEAAKcZb5D2licqkd/6MifDqyKZBR5bONLTO1Bf/ooNk59y\n+UGHbxVv+2syQKQhOI3X0p53rYenEXEMa7jTJsYeZ+17UsicIGJmzQUefmB6MTea\nlumARaPqPZ0AUBdmzHGyfnqPtluGKrcc25vBONY4Z53chwfY+539Kwp25I0Ha+Zk\nFo7X+2xncOd6mwa2AZ8x7ZddfRh3U8jZDmse2zkP9p1cuRu8dshG0Up4W62OtOon\nFZK/wHBIYSERYJ1fjNHW1EazT5m67JfNlmnCnERoVrWv9P9SldSlx0G616CDWwxS\nbGe5gS/cREdogBqkeELIpcJtNK47UuIztujEr1Ll0QKBgQDQvIn1JSBcSRg2ehis\nB9BVpE7FNPHFLxaVnIJUvUC05bWeoF4NFrD+Io0mGrMPUw8iBIAXw6/i14qqlI9l\neqkUmG9iQ81zPvij4uv56MKTFDOH4nTnxFMc9sgOHyPYUFYgWi+ImaLJIKx3LTPM\nqWYoOF1Nz/Z68UKs5UUbNzpguQKBgQC88ljXV2e3d+DEOAxJzEbM4eNTpo+VYZt8\nP2C62WOEkQx/FtjoMtZ+5PMbs78pQNEZVqdxUYb/qvrQWcf56dBZ9cbfNqJBio+7\nhkx7gAIg58WYhaBjNMp4nNlSptJNZIx1/VPmQG9NWaI1nNXHBLyVuVHfklactoOS\nO/Jgak9rgwKBgQCK00ohm66ZEhgjazLrf0rlGqE08ZB2p2mq2Wuo9jGJ3ljbhibn\nJ5dRfiNIG2vJnmErK7kRlRlukhHsf1+bi2fWhcdWoGeM5W2yeeKd1FtMPJxFHKzJ\n1D2+vraxBa7uWAff/nssq5mjkLKDlLGlxWhnCY2sicqRW9IPcXBzuFiAKQKBgDxf\nv82HS0fPkU2Bj0Ohd1oOL8JR7X1RBArOgY0S237HjlOprEN9wxYm+Bt48vMul+Hd\n04EdCOL28k/S8FhFwuKL6zD11yDUMps8DYJE4+k5xeS3hglNHAkwLS0AyyAZqdwl\nx0JCgo4XvwIcjB6cv9mjrqqeqvhGRYJbj1YJgjkbAoGAbhYq7CK8kL6vvvA4sL79\ndsswNMD+y6iZUl+A6FEOxM3R4p1F2oLp9pcz+Tw+ogW2A89IyHakHp1od4FeJgdz\nDWR6XwFuqJb11fqMGzW4WdofXg2A68uRM7CFrz8sjHyWqOiN/BSecI8JZQpMJ3tB\n0Uc5gi265bMXN7b1tYde+10=\n-----END PRIVATE KEY-----\n",
+  "client_email": "momopay@idyllic-lotus-449820-h0.iam.gserviceaccount.com",
+  "client_id": "118389792619210750495",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/momopay%40idyllic-lotus-449820-h0.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
