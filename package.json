@@ -4,8 +4,7 @@
   "description": "Simple WhatsApp API using whatsapp-web.js",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js" // يمكنك إضافة هذا السطر إذا كنت تستخدم nodemon للتطوير
+    "start": "node index.js"
   },
   "dependencies": {
     "express": "^4.18.2",
