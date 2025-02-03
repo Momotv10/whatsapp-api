@@ -1,6 +1,7 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
+const qrcode = require('qrcode');
 const express = require('express');
+const path = require('path');
 
 const app = express();
 app.use(express.json());
@@ -14,10 +15,19 @@ const client = new Client({
     }
 });
 
-// توليد QR Code عند الحاجة لتسجيل الدخول
-client.on('qr', (qr) => {
-    console.log("✅ QR Code generated. Scan the QR code below to login:");
-    qrcode.generate(qr, { small: false }); // جعل QR Code أكبر وأوضح
+// متغير لتخزين QR Code كصورة
+let qrCodeImageUrl = null;
+
+// توليد QR Code كصورة
+client.on('qr', async (qr) => {
+    console.log("✅ QR Code generated. Generating image...");
+
+    // إنشاء QR Code كصورة
+    const qrCodeImage = await qrcode.toDataURL(qr);
+    qrCodeImageUrl = qrCodeImage;
+
+    console.log("✅ QR Code image generated. Use the following URL to scan:");
+    console.log(qrCodeImageUrl); // هذا هو رابط الصورة
 });
 
 // التأكد من أن العميل جاهز
@@ -39,6 +49,14 @@ app.post('/send', async (req, res) => {
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
+});
+
+// API للحصول على QR Code كصورة
+app.get('/qrcode', (req, res) => {
+    if (!qrCodeImageUrl) {
+        return res.status(404).json({ success: false, error: "QR Code not generated yet." });
+    }
+    res.send(`<img src="${qrCodeImageUrl}" alt="QR Code" />`);
 });
 
 // تشغيل السيرفر
