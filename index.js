@@ -12,14 +12,14 @@ const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
 const FOLDER_ID = '1EREBW5S6FB4qizTyBW18Vcgxkeg80TbJ';
 
 const auth = new google.auth.GoogleAuth({
-    keyFile: 'momo.json',
+    keyFile: 'https://firebasestorage.googleapis.com/v0/b/momopay-12ca0.appspot.com/o/idyllic-lotus-449820-h0-0681609b2802.json?alt=media&token=3de7563a-7cb0-4a89-8e24-0f41d14df45e',
     scopes: SCOPES,
 });
 
 const drive = google.drive({ version: 'v3', auth });
 
 // تعديل مسارات الجلسة
-const SESSION_DIR = './.wwebjs_auth';
+const SESSION_DIR = './momopay';
 const MULTI_DEVICE_DIR = path.join(SESSION_DIR, 'session-client-one', 'Default');
 
 let client;
