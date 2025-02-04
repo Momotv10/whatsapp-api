@@ -7,25 +7,28 @@ const { google } = require('googleapis');
 const app = express();
 app.use(express.json());
 
-// 🔹 إعداد Google Drive API
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
-const FOLDER_ID = '1EREBW5S6FB4qizTyBW18Vcgxkeg80TbJ'; // Folder ID الخاص بك
+const FOLDER_ID = '1EREBW5S6FB4qizTyBW18Vcgxkeg80TbJ';
 
 const auth = new google.auth.GoogleAuth({
-    keyFile: 'momo.json', // ملف JSON الخاص بك
+    keyFile: 'momo.json',
     scopes: SCOPES,
 });
 
 const drive = google.drive({ version: 'v3', auth });
 
-const SESSION_FILE_PATH = './session.json';
+// تغيير مسار الجلسة ليتوافق مع المجلد الذي يستخدمه LocalAuth
+const SESSION_DIR = './sessions';
+const SESSION_FILE_PATH = `${SESSION_DIR}/session.json`;
 
 let client;
 let qrCodeImageUrl = null;
 
-// 🔹 استعادة الجلسة من Google Drive عند بدء التشغيل
 async function downloadSession() {
     try {
+        // إنشاء المجلد إذا لم يكن موجوداً
+        await fs.ensureDir(SESSION_DIR);
+        
         if (fs.existsSync(SESSION_FILE_PATH)) {
             console.log('✅ الجلسة موجودة محليًا.');
             return;
@@ -40,7 +43,14 @@ async function downloadSession() {
             const fileId = response.data.files[0].id;
             const dest = fs.createWriteStream(SESSION_FILE_PATH);
             await drive.files.get({ fileId, alt: 'media' }, { responseType: 'stream' })
-                .then(res => res.data.pipe(dest));
+                .then(res => {
+                    return new Promise((resolve, reject) => {
+                        res.data
+                            .pipe(dest)
+                            .on('finish', resolve)
+                            .on('error', reject);
+                    });
+                });
             console.log('✅ تم استعادة الجلسة من Google Drive.');
         } else {
             console.log('⚠️ لا يوجد ملف جلسة محفوظ، سيتم إنشاء جلسة جديدة.');
@@ -50,9 +60,14 @@ async function downloadSession() {
     }
 }
 
-// 🔹 حفظ الجلسة إلى Google Drive
 async function uploadSession() {
     try {
+        // التأكد من وجود الملف قبل المحاولة لرفعه
+        if (!fs.existsSync(SESSION_FILE_PATH)) {
+            console.log('⚠️ ملف الجلسة غير موجود للرفع.');
+            return;
+        }
+
         const response = await drive.files.list({
             q: `'${FOLDER_ID}' in parents and name='session.json'`,
             fields: 'files(id, name)',
@@ -77,13 +92,13 @@ async function uploadSession() {
     }
 }
 
-// 🔹 تحميل الجلسة عند بدء التشغيل ثم تشغيل العميل
 async function startWhatsApp() {
     await downloadSession();
 
     client = new Client({
         authStrategy: new LocalAuth({
-            dataPath: 'sessions'
+            clientId: 'whatsapp-client', // إضافة معرف ثابت للعميل
+            dataPath: SESSION_DIR
         }),
         puppeteer: {
             headless: true,
@@ -96,9 +111,12 @@ async function startWhatsApp() {
         qrCodeImageUrl = await qrcode.toDataURL(qr);
     });
 
-    client.on('authenticated', async () => {
+    client.on('authenticated', async (session) => {
         console.log('✅ مصادقة ناجحة! يتم حفظ الجلسة الآن في Google Drive...');
-        await uploadSession();
+        // إضافة تأخير قصير للتأكد من حفظ الملفات
+        setTimeout(async () => {
+            await uploadSession();
+        }, 1000);
     });
 
     client.on('ready', () => {
@@ -108,10 +126,8 @@ async function startWhatsApp() {
     client.initialize();
 }
 
-// 🔹 تشغيل الوظائف
 startWhatsApp();
 
-// 🔹 API للحصول على QR Code كصورة
 app.get('/qrcode', (req, res) => {
     if (!qrCodeImageUrl) {
         return res.status(404).json({ success: false, error: "QR Code غير متاح حاليًا" });
@@ -119,7 +135,6 @@ app.get('/qrcode', (req, res) => {
     res.send(`<img src="${qrCodeImageUrl}" alt="QR Code" />`);
 });
 
-// 🔹 API لإرسال رسالة
 app.post('/send', async (req, res) => {
     const { phone, message } = req.body;
     if (!phone || !message) {
@@ -133,7 +148,6 @@ app.post('/send', async (req, res) => {
     }
 });
 
-// 🔹 تشغيل السيرفر
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server is running on port ${PORT}`);
